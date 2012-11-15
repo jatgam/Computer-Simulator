@@ -1,46 +1,34 @@
 #!/usr/bin/env python
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # SimulatedCPU.py
-# Version: 0.0.1
-# By: Shawn Silva (shawn at jatgam dot com)
+# By: Shawn Silva (ssilva at jatgam dot com)
 # Part of Jatgam Computer Simulator
-# 
-# Created: 03/27/2012
-# Modified: 05/10/2012
 # 
 # Simulates the CPU.
 # -----------------------------------------------------------------------------
 #
-# 
 # REQUIREMENTS:
 # Python 3.2.x
 # 
 # Copyright (C) 2012  Jatgam Technical Solutions
 # ----------------------------------------------
-# This program is free software: you can redistribute it and/or modify
+# This file is part of Jatgam Computer Simulator.
+#
+# Jatgam Computer Simulator is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
+# Jatgam Computer Simulator is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# along with Jatgam Computer Simulator.  If not, see <http://www.gnu.org/licenses/>.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                    TODO                                     #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#  - 
-# 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                  CHANGELOG                                  #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# 05/10/2012        v0.0.1 - Added to a git repo.        
-# 03/27/2012        v0.0.1 - Initial script creation.
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+from computersimulator.hardware.SimulatedRAM import SimulatedRAM
+from computersimulator.hardware.SimulatedDisk import SimulatedDisk
 
 class SimulatedCPU:
     
@@ -101,10 +89,30 @@ class SimulatedCPU:
     
     def __init__(self):
         
-        ### Hardware Variables ###
+        ### CPU Hardware Variables ###
         self.gpr = [0]*8        #General Purpose Registers
         self.sp = None          #Stack Pointer
         self.pc = None          #Program Counter
         self.ir = None          #Instruction Register
         self.psr = None         #Processor Status Register
         self.clock = None       #Clock
+        ### Other Hardware Accessed by CPU ###
+        self.sram = SimulatedRAM()
+        self.sdisk = SimulatedDisk("computersimulator/hardware/disks/disk.dsk")
+        if (self.sdisk.disk == -1):
+            print("Fatal Error! Disk not found!")
+            sys.exit()
+        print(self._fetchOperand(0,5))
+            
+    def _fetchOperand(self, mode, reg):
+        if (mode == self.MODE_DIRECT):   #Direct Mode
+            if (self.pc >= 0) and (self.pc <= 9999):
+                opAddr = self.sram.ram[self.pc] #get opAddr using PC
+                self.pc += 1
+                if (opAddr >= 0) and (opAddr <= 9999):
+                    opValue = self.sram.ram[opAddr] #get opValue
+                else:
+                    return self.ER_INVALIDADDR
+            else:
+                return self.ER_INVALIDADDR
+            return self.OK, opAddr, opValue

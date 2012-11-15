@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# GeneralFunctions.py
+# SimulatedRAM.py
 # By: Shawn Silva (ssilva at jatgam dot com)
-# Part of Jatgam Computer Simulator
+# Jatgam Computer Simulator
 # 
-# General Functions.
+# Simulates the RAM.
 # -----------------------------------------------------------------------------
 #
 # REQUIREMENTS:
@@ -28,8 +28,8 @@
 # along with Jatgam Computer Simulator.  If not, see <http://www.gnu.org/licenses/>.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def numJoin(numList):
-    return int(''.join(map(str,numList)))
-    
-def numSplit(num):
-    return list(map(int,str(num)))
+class SimulatedRAM:
+    RAMSIZE = 10000
+    def __init__(self):
+        ### Hardware Variables ###
+        self.ram = [0]*self.RAMSIZE        #Machine Memory

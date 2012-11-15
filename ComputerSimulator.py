@@ -1,54 +1,37 @@
 #!/usr/bin/env python
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # ComputerSimulator.py
-# Version: 0.0.1
-# By: Shawn Silva (shawn at jatgam dot com)
+# By: Shawn Silva (ssilva at jatgam dot com)
 # Jatgam Computer Simulator
-# 
-# Created: 03/27/2012
-# Modified: 05/10/2012
 # 
 # Simulates the CPU, Memory, Disk, and OS of a computer allowing you to create
 # and run simple assembly programs.
 # -----------------------------------------------------------------------------
 #
-# 
 # REQUIREMENTS:
 # Python 3.2.x
 # 
 # Copyright (C) 2012  Jatgam Technical Solutions
 # ----------------------------------------------
-# This program is free software: you can redistribute it and/or modify
+# This file is part of Jatgam Computer Simulator.
+#
+# Jatgam Computer Simulator is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
+# Jatgam Computer Simulator is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# along with Jatgam Computer Simulator.  If not, see <http://www.gnu.org/licenses/>.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                    TODO                                     #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#  - 
-# 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                  CHANGELOG                                  #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# 05/10/2012        v0.0.1 - Added to a git repo.        
-# 03/27/2012        v0.0.1 - Initial script creation.
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
 import sys
 import math
 
-from SimulatedCPU import SimulatedCPU
-from SimulatedDisk import SimulatedDisk
-from SimulatedRAM import SimulatedRAM
+from computersimulator.hardware.SimulatedCPU import SimulatedCPU
 from GeneralFunctions import *
 
 class ComputerSimulator:
@@ -107,11 +90,6 @@ class ComputerSimulator:
     
     def __init__(self):
         self.scpu = SimulatedCPU()
-        self.sdisk = SimulatedDisk("disks/disk.dsk")
-        if (self.sdisk.disk == -1):
-            print("Fatal Error! Disk not found!")
-            sys.exit()
-        self.sram = SimulatedRAM()
     
     def initializeSystem(self):
         """Sets all hardware variables to zero. Initializes the user and OS
@@ -123,24 +101,24 @@ class ComputerSimulator:
         self.scpu.clock = 0
         for curgpr in range(len(self.scpu.gpr)):
             self.scpu.gpr[curgpr] = 0
-        for mempos in range(len(self.sram.ram)):
-            self.sram.ram[mempos] = 0
+        for mempos in range(len(self.scpu.sram.ram)):
+            self.scpu.sram.ram[mempos] = 0
         self._checkDisk()
         #Initialize User Free List
         self.userFreeList = 3000
-        self.sram.ram[3000] = self.EOL
-        self.sram.ram[3001] = 4000;
+        self.scpu.sram.ram[3000] = self.EOL
+        self.scpu.sram.ram[3001] = 4000;
         #Initialize OS Free List
         self.osFreeList = 7000;
-        self.sram.ram[7000] = self.EOL
-        self.sram.ram[7001] = 3000;
+        self.scpu.sram.ram[7000] = self.EOL
+        self.scpu.sram.ram[7001] = 3000;
 
     def _checkDisk(self):
-        if (self.sdisk.disk[0] == [0]*self.sdisk.SECTOR_SIZE):
+        if (self.scpu.sdisk.disk[0] == [0]*self.scpu.sdisk.SECTOR_SIZE):
             #Disk Not Formatted!
             print("Disk not formatted, proceeding with format.")
             self._formatDisk()
-        elif (numJoin(self.sdisk.disk[0][0:2]) != PARTITION_TYPE):
+        elif (numJoin(self.scpu.sdisk.disk[0][0:2]) != PARTITION_TYPE):
             print("Unsupported File System! Quitting!")
             sys.exit()
         else:
@@ -153,21 +131,21 @@ class ComputerSimulator:
         Also, loads the OS boot code. In this case, and Idle process.
         """
         idle = [0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]
-        part1size = self.sdisk.NUM_SECTORS-1
+        part1size = self.scpu.sdisk.NUM_SECTORS-1
         part1fatStart = int(part1size/2)
-        part1bitmapsize = math.ceil(part1size/self.sdisk.SECTOR_SIZE)
+        part1bitmapsize = math.ceil(part1size/self.scpu.sdisk.SECTOR_SIZE)
         #Creating the MBR
-        self.sdisk.disk[0][0:2] = numSplit(self.PARTITION_TYPE)
-        self.sdisk.disk[0][2:8] = numSplit(format(1, "06d"))
-        self.sdisk.disk[0][8:14] = numSplit(format(part1size, "06d"))
+        self.scpu.sdisk.disk[0][0:2] = numSplit(self.PARTITION_TYPE)
+        self.scpu.sdisk.disk[0][2:8] = numSplit(format(1, "06d"))
+        self.scpu.sdisk.disk[0][8:14] = numSplit(format(part1size, "06d"))
         #Creating First Sector of Partition
-        self.sdisk.disk[1][0:6] = numSplit(format(part1fatStart, "06d"))
-        self.sdisk.disk[1][6:12] = numSplit(format(self.FAT_SIZE, "06d"))
-        self.sdisk.disk[1][12:18] = numSplit(format(2, "06d"))
-        self.sdisk.disk[1][18:24] = numSplit(format(part1bitmapsize, "06d"))
-        self.sdisk.disk[1][110:128] = list(idle)
+        self.scpu.sdisk.disk[1][0:6] = numSplit(format(part1fatStart, "06d"))
+        self.scpu.sdisk.disk[1][6:12] = numSplit(format(self.FAT_SIZE, "06d"))
+        self.scpu.sdisk.disk[1][12:18] = numSplit(format(2, "06d"))
+        self.scpu.sdisk.disk[1][18:24] = numSplit(format(part1bitmapsize, "06d"))
+        self.scpu.sdisk.disk[1][110:128] = list(idle)
         #Initializing Sector Bitmap
-        slack = self.sdisk.SECTOR_SIZE-(part1size%self.sdisk.SECTOR_SIZE)
+        slack = self.scpu.sdisk.SECTOR_SIZE-(part1size%self.scpu.sdisk.SECTOR_SIZE)
         self.partBitmapUpdate(2,8,part1size+1,slack,self.BTMP_INV)
         self.partBitmapUpdate(2,8,1,1,self.BTMP_SYS)
         self.partBitmapUpdate(2,8,2,8,self.BTMP_SYS)
@@ -175,33 +153,33 @@ class ComputerSimulator:
     
     def partBitmapUpdate(self, bitstart, bitsize, start, size, op):
         """Updates the bitmap and either marks free, used, or system."""
-        bstartsec = math.ceil(start/self.sdisk.SECTOR_SIZE)-1
-        bendsec = math.ceil((start+size)/self.sdisk.SECTOR_SIZE)-1
-        if (start <= self.sdisk.SECTOR_SIZE):
+        bstartsec = math.ceil(start/self.scpu.sdisk.SECTOR_SIZE)-1
+        bendsec = math.ceil((start+size)/self.scpu.sdisk.SECTOR_SIZE)-1
+        if (start <= self.scpu.sdisk.SECTOR_SIZE):
             if (bstartsec == bendsec):
                 if (start-1 == 0):
-                    self.sdisk.disk[bitstart+bstartsec][start-1:size] = [op]*size
+                    self.scpu.sdisk.disk[bitstart+bstartsec][start-1:size] = [op]*size
                 else:
-                    self.sdisk.disk[bitstart+bstartsec][start-1:size+1] = [op]*size
+                    self.scpu.sdisk.disk[bitstart+bstartsec][start-1:size+1] = [op]*size
             else:
                 offset = start
-                newstart = self.sdisk.SECTOR_SIZE+1
-                while (offset <= self.sdisk.SECTOR_SIZE):
-                    self.sdisk.disk[bitstart+bstartsec][offset-1] = op
+                newstart = self.scpu.sdisk.SECTOR_SIZE+1
+                while (offset <= self.scpu.sdisk.SECTOR_SIZE):
+                    self.scpu.sdisk.disk[bitstart+bstartsec][offset-1] = op
                     offset += 1
                     size -= 1
                 self.partBitmapUpdate(bitstart, bitsize, newstart, size, op)
         else:
-            offset = start%self.sdisk.SECTOR_SIZE
+            offset = start%self.scpu.sdisk.SECTOR_SIZE
             if (bstartsec == bendsec):
                 if (offset-1 == 0):
-                    self.sdisk.disk[bitstart+bstartsec][offset-1:size] = [op]*size
+                    self.scpu.sdisk.disk[bitstart+bstartsec][offset-1:size] = [op]*size
                 else:
-                    self.sdisk.disk[bitstart+bstartsec][offset-1:size+1] = [op]*size
+                    self.scpu.sdisk.disk[bitstart+bstartsec][offset-1:size+1] = [op]*size
             else:
-                newstart = (start+size)-((start+size)%self.sdisk.SECTOR_SIZE)+1
-                while (offset <= self.sdisk.SECTOR_SIZE):
-                    self.sdisk.disk[bitstart+bstartsec][offset-1] = op
+                newstart = (start+size)-((start+size)%self.scpu.sdisk.SECTOR_SIZE)+1
+                while (offset <= self.scpu.sdisk.SECTOR_SIZE):
+                    self.scpu.sdisk.disk[bitstart+bstartsec][offset-1] = op
                     offset += 1
                     size -= 1
                 self.partBitmapUpdate(bitstart, bitsize, newstart, size, op)
@@ -227,7 +205,7 @@ class ComputerSimulator:
         while (numLines >= 0):
             print(str(curIndex)+"\t", end='')
             for i in range(0,10):
-                print(str(self.sram.ram[curIndex])+"\t", end='')
+                print(str(self.scpu.sram.ram[curIndex])+"\t", end='')
                 curIndex += 1
             print("\n")
             numLines -= 1
@@ -243,7 +221,7 @@ class ComputerSimulator:
         curIndex = pcbptr
         num = 0
         offset = pcbptr%10
-        print("Printing PCB for PID "+str(self.sram.ram[pcbptr+3])+":")
+        print("Printing PCB for PID "+str(self.scpu.sram.ram[pcbptr+3])+":")
         print(str(pcbptr)+":\t+0\t+1\t+2\t+3\t+4\t+5\t+6\t+7\t+8\t+9\t")
         while (num <= 25):
             print(str(line)+"\t", end='')
@@ -257,7 +235,7 @@ class ComputerSimulator:
                     return
                 else:
                     num += 1
-                print(str(self.sram.ram[curIndex])+"\t", end='')
+                print(str(self.scpu.sram.ram[curIndex])+"\t", end='')
                 curIndex += 1
                 if (curIndex%10 == 0):
                     break
@@ -276,7 +254,7 @@ class ComputerSimulator:
             print("--------------")
             while (ptr != self.EOL):
                 self.printPCB(ptr)
-                ptr = self.sram.ram[ptr]
+                ptr = self.scpu.sram.ram[ptr]
                 if (ptr != self.EOL):
                     print("--------------")
             print("--------------")
@@ -296,7 +274,7 @@ class ComputerSimulator:
             print("--------------")
             while (ptr != self.EOL):
                 self.printPCB(ptr)
-                ptr = self.sram.ram[ptr]
+                ptr = self.scpu.sram.ram[ptr]
                 if (ptr != self.EOL):
                     print("--------------")
             print("--------------")
@@ -321,7 +299,7 @@ class ComputerSimulator:
 if __name__=="__main__":
     comp = ComputerSimulator()
     comp.initializeSystem()
-    print(comp.sdisk.disk[0:10])
+    print(comp.scpu.sdisk.disk[0:10])
     #comp.printRQ(comp.RQptr)
     #comp.dumpMemory("trial", 2999, 3050)
     #print(comp.sdisk.disk[0])
