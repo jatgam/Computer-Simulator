@@ -112,7 +112,51 @@ class SimulatedCPU:
                 if (opAddr >= 0) and (opAddr <= 9999):
                     opValue = self.sram.ram[opAddr] #get opValue
                 else:
-                    return self.ER_INVALIDADDR
+                    return self.ER_INVALIDADDR, None, None
             else:
-                return self.ER_INVALIDADDR
+                return self.ER_INVALIDADDR, None, None
             return self.OK, opAddr, opValue
+            
+        elif (mode == self.MODE_REGISTER):  #Register Mode
+            opAddr = -1 #Not in Memory
+            apValue = self.gpr[reg]
+            return self.OK, opAddr, opValue
+            
+        elif (mode == self.MODE_REGDEFERRED):   #Register Deferred Mode
+            opAddr = self.gpr[reg]
+            if (opAddr >= 0) and (opAddr <= 9999):
+                opValue = self.ram[opAddr]
+            else:
+                return self.ER_INVALIDADDR, None, None
+            return self.OK, opAddr, opValue
+            
+        elif (mode == self.MODE_AUTOINC):   #Auto Increment Mode
+            opAddr = self.gpr[reg]
+            if (opAddr >= 0) and (opAddr <= 9999):
+                opValue = self.ram[opAddr]
+            else:
+                return self.ER_INVALIDADDR, None, None
+            self.gpr[reg] += 1
+            return self.OK, opAddr, opValue
+            
+        elif (mode == self.MODE_AUTODEC):   #Auto Decrement Mode
+            self.gpr[reg] -= 1
+            opAddr = self.gpr[reg]
+            if (opAddr >= 0) and (opAddr <= 9999):
+                opValue = self.ram[opAddr]
+            else:
+                return self.ER_INVALIDADDR, None, None
+            return self.OK, opAddr, opValue
+            
+        elif (mode == self.MODE_IMMEDIATE): #Immediate Mode
+            opAddr = self.pc
+            self.pc += 1
+            if (opAddr >= 0) and (opAddr <= 9999):
+                opValue = self.ram[opAddr]
+            else:
+                return self.ER_INVALIDADDR, None, None
+            return self.OK, opAddr, opValue
+            
+        else:
+            return self.ER_INVALIDMODE, None, None
+    
