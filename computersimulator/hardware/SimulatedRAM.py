@@ -3,13 +3,13 @@
 # SimulatedRAM.py
 # By: Shawn Silva (ssilva at jatgam dot com)
 # Jatgam Computer Simulator
-# 
+#
 # Simulates the RAM.
 # -----------------------------------------------------------------------------
 #
 # REQUIREMENTS:
 # Python 3.2.x
-# 
+#
 # Copyright (C) 2012  Jatgam Technical Solutions
 # ----------------------------------------------
 # This file is part of Jatgam Computer Simulator.

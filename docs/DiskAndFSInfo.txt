@@ -5,7 +5,7 @@ Sector 0 -"Boot Sector" Contains partition information.
 		0-1			FS Type. Valid type = 42
 		2-7			Partition Start (sector)
 		8-13		Partition Size (sectors)
-		
+
 First Sector of Partition:
 	0-5			Pointer to File Allocation Table (FAT) Start (sector)
 	6-11		FAT Size
@@ -13,14 +13,14 @@ First Sector of Partition:
 	18-23		Sector Bitmap Size (sectors)
 	30-109		Reserved
 	110-127		"OS Boot Code" Currently Idle Process
-	
+
 Sector Bitmap:
 	Each byte represents a sector in the partition.
 		0 = Unused
 		1 = Used
 		2 = Partition System Files
 		-1 = Not a valid Sector (at end of list)
-		
+
 File Allocation Table (FAT) Entry:
 	0			Type. 0=Data 1=Executable
 	1-6			File Name

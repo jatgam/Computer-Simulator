@@ -3,14 +3,14 @@
 # ComputerSimulator.py
 # By: Shawn Silva (ssilva at jatgam dot com)
 # Jatgam Computer Simulator
-# 
+#
 # Simulates the CPU, Memory, Disk, and OS of a computer allowing you to create
 # and run simple assembly programs.
 # -----------------------------------------------------------------------------
 #
 # REQUIREMENTS:
 # Python 3.2.x
-# 
+#
 # Copyright (C) 2012  Jatgam Technical Solutions
 # ----------------------------------------------
 # This file is part of Jatgam Computer Simulator.
@@ -35,7 +35,7 @@ from computersimulator.hardware.SimulatedCPU import SimulatedCPU
 from GeneralFunctions import *
 
 class ComputerSimulator:
-    
+
     ### System Calls ###
     TASK_CREATE = 0                 #Create Task
     TASK_DELETE = 1                 #Delete Task
@@ -48,7 +48,7 @@ class ComputerSimulator:
     IO_PUTC = 15                    #Display one character
     TIME_GET = 16                   #Get the time
     TIME_SET = 17                   #Set the time
-    
+
     ### OS Values ###
     OSMODE = 1
     USERMODE = 0
@@ -64,33 +64,33 @@ class ComputerSimulator:
     WAITINGGET = 3                  #waiting for input
     WAITINGPUT = 4                  #waiting to output
     HALT = -20                      #halt status
-    
+
     osFreeList = EOL                #OS Free Mem List
     userFreeList = EOL              #User Free Mem List
     pid = 0                         #Process ID
     RQptr = EOL						#Ready Queue Pointer
     WQptr = EOL						#waiting queue pointer
     RunningPCBptr = EOL				#Whats currently Running
-    
+
     ### Interrupts ###
     NO_INT = 0                      #No interrupts
     INPUT_INT = 1                   #Read one character
     OUTPUT_INT = 2                  #Output one character
     RUN_INT = 3                     #Run user program
     SHUTDOWN_INT = 4                #shutdown system
-    
+
     ### Disk File System Values ###
     PARTITION_TYPE = 42             #Made up Partition Type ID
     FAT_SIZE = 20                   #Size of FAT in sectors
     BTMP_FREE = 0                   #Bitmap Sector Free
     BTMP_USED = 1                   #Bitmap Sector Used
-    BTMP_SYS = 2                    #Bitmap Sector Used by System    
+    BTMP_SYS = 2                    #Bitmap Sector Used by System
     BTMP_INV = -1                   #Bitmap Sector is out of Partition/Invalid
-    
-    
+
+
     def __init__(self):
         self.scpu = SimulatedCPU()
-    
+
     def initializeSystem(self):
         """Sets all hardware variables to zero. Initializes the user and OS
         free lists."""
@@ -123,11 +123,11 @@ class ComputerSimulator:
             sys.exit()
         else:
             return True
-    
+
     def _formatDisk(self):
         """
         Writes the MBR and creates a partition on disk.
-        
+
         Also, loads the OS boot code. In this case, and Idle process.
         """
         idle = [0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1]
@@ -150,7 +150,7 @@ class ComputerSimulator:
         self.partBitmapUpdate(2,8,1,1,self.BTMP_SYS)
         self.partBitmapUpdate(2,8,2,8,self.BTMP_SYS)
         self.partBitmapUpdate(2,8,part1fatStart,self.FAT_SIZE,self.BTMP_SYS)
-    
+
     def partBitmapUpdate(self, bitstart, bitsize, start, size, op):
         """Updates the bitmap and either marks free, used, or system."""
         bstartsec = math.ceil(start/self.scpu.sdisk.SECTOR_SIZE)-1
@@ -183,7 +183,7 @@ class ComputerSimulator:
                     offset += 1
                     size -= 1
                 self.partBitmapUpdate(bitstart, bitsize, newstart, size, op)
-    
+
     def dumpMemory(self, title, start, end):
         """
         Prints out the values of GPRs, selected RAM locations, and the clock
@@ -214,7 +214,7 @@ class ComputerSimulator:
         print("----------------------------------------")
         print("End: "+title)
         print("----------------------------------------")
-        
+
     def printPCB(self, pcbptr):
         """Prints a given PCB's Values."""
         line = pcbptr = pcbptr%10
@@ -240,7 +240,7 @@ class ComputerSimulator:
                 if (curIndex%10 == 0):
                     break
             print("\n", end='')
-            
+
     def printRQ(self, queuePTR):
         """Steps through the RQ and prints each PCB."""
         ptr = queuePTR
@@ -260,7 +260,7 @@ class ComputerSimulator:
             print("--------------")
             print("| End of RQ. |")
             print("--------------")
-        
+
     def printWQ(self, queuePTR):
         """Steps through the WQ and prints each PCB."""
         ptr = queuePTR
@@ -280,7 +280,7 @@ class ComputerSimulator:
             print("--------------")
             print("| End of WQ. |")
             print("--------------")
-            
+
     def printRunningP(self, runningPTR):
         """Prints the PCB for the running process."""
         if (runningPTR == self.EOL):
@@ -295,11 +295,12 @@ class ComputerSimulator:
             print("-------------------------------")
             print("|End of Running Process PCB.|")
             print("-------------------------------")
-        
+
 if __name__=="__main__":
     comp = ComputerSimulator()
     comp.initializeSystem()
     print(comp.scpu.sdisk.disk[0:10])
+    #comp.scpu.sdisk.writeCache()
     #comp.printRQ(comp.RQptr)
     #comp.dumpMemory("trial", 2999, 3050)
     #print(comp.sdisk.disk[0])

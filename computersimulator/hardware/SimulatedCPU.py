@@ -3,13 +3,13 @@
 # SimulatedCPU.py
 # By: Shawn Silva (ssilva at jatgam dot com)
 # Part of Jatgam Computer Simulator
-# 
+#
 # Simulates the CPU.
 # -----------------------------------------------------------------------------
 #
 # REQUIREMENTS:
 # Python 3.2.x
-# 
+#
 # Copyright (C) 2012  Jatgam Technical Solutions
 # ----------------------------------------------
 # This file is part of Jatgam Computer Simulator.
@@ -31,7 +31,7 @@ from computersimulator.hardware.SimulatedRAM import SimulatedRAM
 from computersimulator.hardware.SimulatedDisk import SimulatedDisk
 
 class SimulatedCPU:
-    
+
     ### Opcodes ###
     OP_HALT = 0                 #Opcode: Halt
     OP_ADD = 1                  #Opcode: Add
@@ -46,16 +46,16 @@ class SimulatedCPU:
     OP_BRANCHZ = 10             #Opcode: Branch on Zero
     OP_PUSH = 11                #Opcode: Push
     OP_POP = 12                 #Opcode: Pop
-    
+
     MODE_DIRECT = 0             #Mode: Direct
     MODE_REGISTER = 1           #Mode: Register
     MODE_REGDEFERRED = 2        #Mode: Register Deffered
     MODE_AUTOINC = 3            #Mode: Auto Increment
     MODE_AUTODEC = 4            #Mode: Auto Decrement
     MODE_IMMEDIATE = 5          #Mode: Immediate
-    
+
     ENDPROG = -1                #End of Program
-    
+
     ### Return Codes ###
     OK = 0                      #Successful execution
     ER_TID = -1                 #Error: Task ID
@@ -86,9 +86,9 @@ class SimulatedCPU:
     op2Value
     op2Addr
     '''
-    
+
     def __init__(self):
-        
+
         ### CPU Hardware Variables ###
         self.gpr = [0]*8        #General Purpose Registers
         self.sp = None          #Stack Pointer
@@ -102,9 +102,20 @@ class SimulatedCPU:
         if (self.sdisk.disk == -1):
             print("Fatal Error! Disk not found!")
             sys.exit()
-        print(self._fetchOperand(0,5))
-            
+
+    def _executeProgram():
+        """
+        Runs through the ram and grabs the next IR and decodes it. Then
+        performs the correct operation.
+        """
+
     def _fetchOperand(self, mode, reg):
+        """
+        Takes input of a mode and register and returns the values of the
+        operands and a status.
+
+        Returns: status, opAddr, opValue
+        """
         if (mode == self.MODE_DIRECT):   #Direct Mode
             if (self.pc >= 0) and (self.pc <= 9999):
                 opAddr = self.sram.ram[self.pc] #get opAddr using PC
@@ -116,12 +127,12 @@ class SimulatedCPU:
             else:
                 return self.ER_INVALIDADDR, None, None
             return self.OK, opAddr, opValue
-            
+
         elif (mode == self.MODE_REGISTER):  #Register Mode
             opAddr = -1 #Not in Memory
             apValue = self.gpr[reg]
             return self.OK, opAddr, opValue
-            
+
         elif (mode == self.MODE_REGDEFERRED):   #Register Deferred Mode
             opAddr = self.gpr[reg]
             if (opAddr >= 0) and (opAddr <= 9999):
@@ -129,7 +140,7 @@ class SimulatedCPU:
             else:
                 return self.ER_INVALIDADDR, None, None
             return self.OK, opAddr, opValue
-            
+
         elif (mode == self.MODE_AUTOINC):   #Auto Increment Mode
             opAddr = self.gpr[reg]
             if (opAddr >= 0) and (opAddr <= 9999):
@@ -138,7 +149,7 @@ class SimulatedCPU:
                 return self.ER_INVALIDADDR, None, None
             self.gpr[reg] += 1
             return self.OK, opAddr, opValue
-            
+
         elif (mode == self.MODE_AUTODEC):   #Auto Decrement Mode
             self.gpr[reg] -= 1
             opAddr = self.gpr[reg]
@@ -147,7 +158,7 @@ class SimulatedCPU:
             else:
                 return self.ER_INVALIDADDR, None, None
             return self.OK, opAddr, opValue
-            
+
         elif (mode == self.MODE_IMMEDIATE): #Immediate Mode
             opAddr = self.pc
             self.pc += 1
@@ -156,7 +167,6 @@ class SimulatedCPU:
             else:
                 return self.ER_INVALIDADDR, None, None
             return self.OK, opAddr, opValue
-            
+
         else:
             return self.ER_INVALIDMODE, None, None
-    

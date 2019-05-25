@@ -3,13 +3,13 @@
 # SimulatedDisk.py
 # By: Shawn Silva (ssilva at jatgam dot com)
 # Jatgam Computer Simulator
-# 
+#
 # Simulates the Disk.
 # -----------------------------------------------------------------------------
 #
 # REQUIREMENTS:
 # Python 3.2.x
-# 
+#
 # Copyright (C) 2012  Jatgam Technical Solutions
 # ----------------------------------------------
 # This file is part of Jatgam Computer Simulator.
@@ -38,7 +38,7 @@ class SimulatedDisk:
         self.diskpath = path
         self.disk = self._loadDisk(path)
         self.cache = False
-        
+
     def _loadDisk(self, path):
         try:
             dskfile = open(path, 'r+b')
@@ -52,7 +52,7 @@ class SimulatedDisk:
             disk = self._initializeDisk(dskfile)
             dskfile.close()
             return  disk
-            
+
     def _initializeDisk(self, dskfile):
         #fs = [[0]*self.SECTOR_SIZE]*self.NUM_SECTORS
         fs = []
@@ -61,7 +61,7 @@ class SimulatedDisk:
             fs.append(list(sector))
         pickle.dump(fs, dskfile)
         return fs
-        
+
     def writeCache(self):
         dskfile = open(self.diskpath, 'r+b')
         dskfile.truncate()
