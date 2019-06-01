@@ -1,0 +1,24 @@
+// Program #3 Machine Code With Comments
+
+Address     Value        Comments
+-------     -----        --------
+65          100          Q, Long, 100
+66          55012        Move Next Word to GPR2, Start
+67          100
+68          85000        System Call, Next word
+69          8            mem_alloc
+70          71000        Branch on Negative, Check GPR0
+71          83           If Negative, goto ErExit
+72          51113        Move GPR1 to GPR3
+73          50033        Move Q to GPR3(auto-inc), Loop
+74          65           Address of Q
+75          25000        Sub Next Word to Q
+76          1
+77          65           Address of Q
+78          90000        Branch on Plus
+79          65           Address of Q, Check if Positive
+80          73           If Positive go to address (Loop)
+81          85000        System Call
+82          9            mem_free
+83          0            End of program, ErExit
+-1          66           PC -> 66

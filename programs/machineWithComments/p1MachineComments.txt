@@ -1,0 +1,31 @@
+// Program #1 Machine Code With Comments
+
+Address     Value       Comments
+-------     -----       --------
+5           1           R, Long, 1
+6           0           S, Long, 0
+7           55012       Move Next Word to GPR2, Start
+8           150
+9           85000       System Call, Next word
+10          8           mem_alloc
+11          71000       Branch on Negative, Check GPR0
+12          30          If Negative, goto ErExit
+13          51113       Move GPR1 to GPR3
+14          50033       Move R to GPR3(auto-inc), Loop
+15          5           Address of R
+16          15000       Add Next Word to R
+17          1
+18          5           Address of R
+19          50000       Move R to S
+20          5           Address of R
+21          6           Address of S
+22          25000       Subtract next word from S
+23          151
+24          6           Address of S
+25          70000       Branch on Negative
+26          6           Address of S, Check if Negative
+27          14          If Negative go to address (Loop)
+28          85000       System Call
+29          9           mem_free
+30          0           End of program, ErExit
+-1          7           PC -> 7

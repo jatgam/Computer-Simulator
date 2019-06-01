@@ -1,0 +1,132 @@
+// Parent/Child Machine Code With Comments
+
+Address     Value        Comments
+-------     -----        --------
+10          0            childpid,long,0
+11          0            msgaddr,long,0
+12          0            parentpid,long,0
+13          4            count,long,4
+14          55013        move childstart to GPR3
+15          80           Address of childstart
+16          85000        System Call
+17          0            Task Create
+18          71000        Branch on Minus, Check GPR0
+19          71           If Negative, go to error1
+20          51200        Move GPR2 to next word
+21          10           Address if childpid
+22          55012        Move next word to GPR2
+23          10           Size of message
+24          85000        System Call, Next Word
+25          8            mem_alloc
+26          71000        Branch On minus, Check GPR0
+27          72           if Negative go to error2
+28          51100        Move GPR1 to msgaddr
+29          11           Address of msgaddr
+30          51115        Move GPR1 to GPR5
+31          85000        System Call
+32          5            Task Inquiry
+33          51100        Move GPR1 to parentpid
+34          12           Address of parentpid
+35          51135        Move GPR1 -> GPR5(auto inc)
+36          55035        Move Next word to GPR5(auto inc)
+37          4
+38          85000        System Call; Create Message
+39          14           IOGetc
+40          71000        Branch on Minus, check GPR0
+41          61           If Negative, goto error 3
+42          51135        Move GPR1 -> GPR5(auto inc)
+43          25000        Subtract next word from count
+44          1
+45          13           Address of count
+46          90000        Branch on plus. Check Count.
+47          13           Address of count.
+48          38           If positive, goto CreateMsg
+49          50011        Move childpid to GPR1
+50          10           Address of childpid
+51          50012        Move msgaddr to GPR2
+52          11           Address of msgaddr
+53          85000        System Call
+54          12           msg_qsend
+55          71000        Branch on Minus, Check GPR0
+56          61           If Negative, goto error 3
+57          85000        System Call
+58          13           msg_qrecieve
+59          71000        Branch on Minus, Check GPR0
+60          61           If Negative, goto error 3
+61          50011        Move childpid -> GPR1; error3
+62          10           Address of childpid
+63          85000        System Call
+64          1            Task Delete
+65          50011        Move msgaddr -> GPR1
+66          11           Address of msgaddr
+67          55012        Move next word to GPR2
+68          10           Size of message
+69          85000        System Call
+70          9            mem_free
+71          0            Halt; error1
+72          50011        Move childpid ->GPR1;error2
+73          10           Address of childpid
+74          85000        System Call
+75          1            Task Delete
+76          0            Halt
+77          0            mypid,long,0
+78          0            msgtoprint,long,0
+79          0            senderpid,long,0
+80          85000        System Call
+81          5            Task Inquiry;childstart
+82          71000        Branch on Minus, Check GPR0
+83          118          If negative, go to error4
+84          51100        Move GPR1 -> mypid
+85          77           Address of mypid
+86          85000        System Call; recieve message
+87          13           msg_qrecieve
+88          71000        Branch on minus, Check GPR0
+89          118          If negative go to error4
+90          51200        Move GPR2 -> msgtoprint
+91          78           Address of msgtoprint
+92          53200        Move GPR2(autoinc) -> senderpid
+93          79           Address of senderpid
+94          53216        Move GPR2(autoinc) -> GPR6
+95          53211        Move GPR2(autinc) -> GPR1; loop
+96          85000        System Call
+97          15           IOPutc
+98          71000        Branch on minus, Check GPR0
+99          120          If negative goto error5
+100         25016        Subtract next word from GPR6
+101         1
+102         91600        Branch on plus, Check GPR6
+103         95           if positive, goto loop
+104         55014        Move msgtoprint to GPR4
+105         78           Address of msgtoprint
+106         55034        Move mypid to GPR4(autoinc)
+107         77           Address of mypid
+108         55034        Move next word toGPR4(autoinc)
+109         1            Count of message
+110         55034        Move 'P' to GPR4(autoinc)
+111         080          'P'
+112         55011        Move senderpid to GPR1
+113         79           Address of senderpid
+114         55012        Move msgtoprint to GPR2
+115         78           Address of msgtoprint
+116         85000        System Call
+117         12           msg_qsend
+118         60000        Branch. Next word contains address
+119         86           RecieveMsg
+120         55014        Move msgtoprint to GPR4;error5
+121         78           Address of msgtoprint
+122         50034        Move mypid to GPR4(autoinc)
+123         77           Address of mypid
+124         55034        Move next word toGPR4(autoinc)
+125         1            Count of message
+126         50034        Move 'F' to GPR4(autoinc)
+127         070          'F'
+128         55011        Move senderpid to GPR1
+129         79           Address of senderpid
+130         55012        Move msgtoprint to GPR2
+131         78           Address of msgtoprint
+132         85000        System Call
+133         12           msg_qsend
+134         60000        Branch. Next word contains address
+135         86           RecieveMsg
+136         0            End of Program. Exit.
+-1          14           PC -> 14

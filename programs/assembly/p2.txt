@@ -1,0 +1,20 @@
+// Program #2 Assembly Code
+
+Label   Mnemonic        Operands        Description
+-----   --------        --------        -----------
+main    Function                        Start of the Main Program
+        origin          35              Where to start storing data
+R       long            2               Initialize R -> 1
+S       long            0               Initialize S -> 0
+Start   move            75,GPR2         Put the value 150 in GPR2
+        systemcall      8               Allocate Memory System Call
+        BranchOnMinus   GPR0,ErExit     Check to see if mem_alloc worked.
+        move            GPR1,GPR3       Assign Value of GPR1 -> GPR3
+Loop    move            R,GPR3          Assign Value of R -> GPR3 (auto-inc)
+        add             2,R             Add 1 to R, Store in R
+        move            R,S             Assign Value of R -> S
+        sub             151,S           Subtract 151 from S, Store in S.
+        BranchOnMinus   S,Loop          If S is negative, go to Loop
+        systemcall      9               Free memory
+ErExt   halt                            Halt execution. Program Done
+        end             Start           Execution Begins at Start

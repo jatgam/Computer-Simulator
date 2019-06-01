@@ -1,0 +1,7 @@
+// Null Program Machine Code With Comments
+
+Address     Value       Comments
+-------     -----       --------
+0           60000       Branch, Next word contains address
+1           0           PC set to 0(Loop)
+-1          0           PC -> 0

@@ -1,0 +1,6 @@
+// null Program Symbol Table
+
+Symbol          Value(Address)
+------          --------------
+main            0
+Loop            0

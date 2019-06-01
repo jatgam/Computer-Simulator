@@ -1,0 +1,17 @@
+// Program #3 Assembly Code
+
+Label   Mnemonic        Operands        Description
+-----   --------        --------        -----------
+main    Function                        Start of the main program
+        origin          65              Where to start storing datak
+Q       long            100             Initialize Q -> 100
+Start   move            100,GPR2        Move 100 into GPR2
+        systemcall      8               Mem_alloc System call
+        BranchOnMinus   GPR0,ErExit     On negative value, go to ErExit
+        move            GPR1,GPR3       Assing the value of GPR1 to GPR3
+Loop    move            Q,GPR3          Assign Value of Q -> GPR3 (Auto-inc)
+        sub             1,Q             Subtract 1 from Q,Store in Q
+        BranchOnPlus    Q,Loop          If Q is positive, PC -> Loop
+        systemcall      9               Free Memory
+ErExit  halt                            End of the program
+        End             Start           Execution Begins at Start

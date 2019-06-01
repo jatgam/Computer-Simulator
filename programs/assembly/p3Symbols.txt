@@ -1,0 +1,9 @@
+// Program #3 Symbol Table
+
+Symbol          Value(Address)
+------          --------------
+main            0 -> 65
+Q               65
+Start           66
+Loop            73
+ErExit          83

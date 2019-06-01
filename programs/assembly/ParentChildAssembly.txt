@@ -1,0 +1,94 @@
+// Parent/Child Program Assembly Code
+
+Label       Mnemonic        Operands            Description
+-----       --------        --------            -----------
+main        Function
+            origin          10
+//Parent Process Code
+childpid    long            0
+msgaddr     long            0
+parentpid   long            0
+count       long            4
+            //Create Child Process
+start       move            childstart,GPR3     Move Start Address of Child to R3
+            systemcall      0                   Task Create
+            BranchMinus     GPR0,error1         Check Status
+            move            GPR2,childpid       Save Child PID
+            //Allocate memory for Message
+            move            10,GPR2             Set Size
+            systemcall      8                   mem_alloc
+            BranchMinus     GPR0,error2         Check Status
+            //Build Message
+            move            GPR1,msgaddr        Message Start Address
+            move            GPR1,GPR5           Copy Start Address
+            //Get My PID
+            systemcall      5                   Task Inquiry
+            move            GPR1,parentpid      Save Parent PID
+            move            GPR1,GPR5++         Store Sender PID in message
+            move            4,GPR5++            Set Char Count to 4
+            //Read 4 Characters, store into message 1 at a time
+CreateMsg   systemcall      14                  IOGetc
+            BranchMinus     GPR0,error3         Check Status
+            move            GPR1,GPR5++         Move Character Into Msg
+            subtract        1,count             Subtract 1 from count
+            BranchPlus      count,CreateMsg     Read 4 characters, then continue on
+            //Send Message to Child
+            move            childpid, GPR1      Set ChildPID into GPR1
+            move            msdaddr, GPR2       Set msg start addr to GPR2
+            systemcall      12                  msg_qsend
+            BranchMinus     GPR0,error3         Check Status
+            //Review Reply Message from Child
+            systemcall      13                  msg_qrecieve
+            BranchMinus     GPR0,error3         Check Status
+            //delete the child
+error3      move            childpid, GPR1      Set GPR1 to childpid
+            systemcall      1                   Task Delete
+            //Free Memory
+            move            msgaddr, GPR1       Set GPR1 to msg start
+            move            10, GPR2            Set GPR2 to the size of msg
+            systemcall      9                   free_mem
+            //Halt
+error1      halt
+            //Handle Last error
+error2      move            childpid,GPR1       Set GPR1 to child pid
+            systemcall      1                   Task Delete
+            halt
+            
+//Child Process Code
+mypid       long            0
+msgtoprint  long            0
+senderpid   long            0
+childstart  systemcall      5                   Task Inquiry
+            BranchMinus     GPR0,error4         Check Status
+            move            GPR1,mypid          Set mypid
+            //wait for message
+RecieveMsg  systemcall      13                  msg_qrecieve
+            BranchMinus     GPR0,error4
+            move            GPR2,msgtoprint     Save Start Addr
+            move            GPR2++,senderpid    Save Sender PID
+            move            GPR2++,GPR6         Get Char Count
+Loop        move            GPR2++,GPR1         Set GPR1 to char to print
+            systemcall      15                  IOputc
+            BranchMinus     GPR0,error5         Check Status
+            Subtract        1, GPR6             Decrement Count
+            BranchPlus      GPR6,Loop
+            //build Reply Message
+            move            msgtoprint,GPR4
+            move            mypid,GPR4++        sender PID
+            move            1,GPR4++            Count
+            move            'P',GPR4++          Successful Print, ASCII Char
+            //send reply message
+            move            senderpid,GPR1
+            move            msgtoprint,GPR2     Start Address of msg
+            systemcall      12                  msg_qsend
+error4      Branch          RecieveMsg
+error5      move            msgtoprint,GPR4
+            move            mypid,GPR4++        sender PID
+            move            1,GPR4++            Count
+            move            'F',GPR4++          Failed Print, ASCII Char
+            //send reply message
+            move            senderpid,GPR1
+            move            msgtoprint,GPR2     Start Address of msg
+            systemcall      12                  msg_qsend
+            Branch          RecieveMsg
+            End             Start

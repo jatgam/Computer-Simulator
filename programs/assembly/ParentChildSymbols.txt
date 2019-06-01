@@ -1,0 +1,22 @@
+// Parent/Child Symbol Table
+
+Symbol          Value(Address)
+------          --------------
+main            0 -> 10
+childpid        10
+msgaddr         11
+parentpid       12
+count           13
+start           14
+CreateMsg       38
+error3          61
+error1          71
+error2          72
+mypid           77
+msgtoprint      78
+senderpid       79
+childstart      80
+RecieveMsg      86
+Loop            95
+error4          118
+error5          120
