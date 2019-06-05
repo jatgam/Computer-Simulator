@@ -40,6 +40,9 @@ class ComputerSimulator:
     WQptr = CONST.EOL  # waiting queue pointer
     RunningPCBptr = CONST.EOL  # Whats currently Running
 
+    memoryLists = {"osFreeList": {"start": 7000, "size": 3000},
+                  "userFreeList": {"start": 3000, "size": 4000}}
+
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.scpu = SimulatedCPU()
@@ -57,14 +60,12 @@ class ComputerSimulator:
         for mempos in range(len(self.scpu.sram.ram)):
             self.scpu.sram.ram[mempos] = 0
         self._checkDisk()
-        #Initialize User Free List
-        self.userFreeList = 3000
-        self.scpu.sram.ram[3000] = CONST.EOL
-        self.scpu.sram.ram[3001] = 4000
-        #Initialize OS Free List
-        self.osFreeList = 7000
-        self.scpu.sram.ram[7000] = CONST.EOL
-        self.scpu.sram.ram[7001] = 3000
+
+        # Initialize Memory Lists
+        for key, value in self.memoryLists.items():
+            vars(self)[key] = value["start"]
+            self.scpu.sram.ram[value["start"]] = CONST.EOL
+            self.scpu.sram.ram[value["start"] + 1] = value["size"]
 
     def _checkDisk(self):
         if (self.scpu.sdisk.disk[0] == [0]*self.scpu.sdisk.sectorSize):
@@ -280,7 +281,7 @@ class ComputerSimulator:
         Returns:
             status          status of the  memory allocation
         """
-        status = self.allocateUserMemory(size)
+        status = self.allocateMemory(size, "userFreeList")
         if (status >= 0):
             self.scpu.gpr[1] = status  # GPR1 Gets pointer to memory
             self.scpu.gpr[0] = CONST.OK  # GPR0 Gets OK Status
@@ -300,22 +301,25 @@ class ComputerSimulator:
         Returns:
             status          status of the system call
         """
-        status = self.freeUserMemory(start, size)
+        status = self.freeMemory(start, size, "userFreeList")
         return status
 
-    def allocateUserMemory(self, size):
+    def allocateMemory(self, size, freeList):
         """
         Takes the supplied size of memory and attempts to allocate it. Searches
         through the userFreeList looking for a block.
 
         Parameters:
             size            size of memory to be allocated
+            freeList        The list (OS/User) to work with
 
         Returns:
             ptr             Pointer to the start of mem location
             ER_MEM          No Memory available.
         """
-        ptr = self.userFreeList
+        if freeList not in self.memoryLists.keys():
+            raise ValueError("Invalid memory list. Expected one of: %s" % self.memoryLists.keys())
+        ptr = vars(self)[freeList]
         previousPtr = CONST.EOL
         while (ptr != CONST.EOL):
             if (self.scpu.sram.ram[ptr+1] >= size):
@@ -328,9 +332,9 @@ class ComputerSimulator:
             return CONST.ER_MEM  # No Memory Available
         if (self.scpu.sram.ram[ptr+1] == size):
             # Found equal size block, check for first block
-            if (ptr == self.userFreeList):
+            if (ptr == vars(self)[freeList]):
                 # First block equal size
-                self.userFreeList = self.scpu.sram.ram[ptr]
+                vars(self)[freeList] = self.scpu.sram.ram[ptr]
                 self.scpu.sram.ram[ptr] = CONST.EOL
                 return ptr
             else:
@@ -339,9 +343,9 @@ class ComputerSimulator:
                 self.scpu.sram.ram[ptr] = CONST.EOL
                 return ptr
         else:  # Found bigger block, check for first block
-            if (ptr == self.userFreeList):  # First Block
+            if (ptr == vars(self)[freeList]):  # First Block
                 # First block bigger, modify size userFreeList
-                self.userFreeList = ptr + size
+                vars(self)[freeList] = ptr + size
                 self.scpu.sram.ram[ptr+size] = self.scpu.sram.ram[ptr]
                 self.scpu.sram.ram[ptr+size+1] = self.scpu.sram.ram[ptr+1] - size
                 self.scpu.sram.ram[ptr] = CONST.EOL
@@ -354,58 +358,7 @@ class ComputerSimulator:
                 self.scpu.sram.ram[ptr] = CONST.EOL
                 return ptr
 
-    def allocateOSMemory(self, size):
-        """
-        Takes the supplied size of memory and attempts to allocate it. Searches
-        through the osFreeList looking for a block.
-
-        Parameters:
-            size            size of memory to be allocated
-
-        Returns:
-            ptr             Pointer to the start of mem location
-            ER_MEM          No Memory available.
-        """
-        ptr = self.osFreeList
-        previousPtr = CONST.EOL
-        while (ptr != CONST.EOL):
-            if (self.scpu.sram.ram[ptr+1] >= size):
-                break  # Found Free Block
-            else:
-                previousPtr = ptr
-                ptr = self.scpu.sram.ram[ptr]
-        # Check Various Cases
-        if (ptr == CONST.EOL):
-            return CONST.ER_MEM  # No Memory Available
-        if (self.scpu.sram.ram[ptr+1] == size):
-            # Found equal size block, check for first block
-            if (ptr == self.osFreeList):
-                # First block equal size
-                self.osFreeList = self.scpu.sram.ram[ptr]
-                self.scpu.sram.ram[ptr] = CONST.EOL
-                return ptr
-            else:
-                # Middle Block Equal Size
-                self.scpu.sram.ram[previousPtr] = self.scpu.sram.ram[ptr]
-                self.scpu.sram.ram[ptr] = CONST.EOL
-                return ptr
-        else:  # Found bigger block, check for first block
-            if (ptr == self.osFreeList):  # First Block
-                # First block bigger, modify size osFreeList
-                self.osFreeList = ptr + size
-                self.scpu.sram.ram[ptr+size] = self.scpu.sram.ram[ptr]
-                self.scpu.sram.ram[ptr+size+1] = self.scpu.sram.ram[ptr+1] - size
-                self.scpu.sram.ram[ptr] = CONST.EOL
-                return ptr
-            else:  # Not first block
-                # Middle block larger size
-                self.scpu.sram.ram[ptr+size] = self.scpu.sram.ram[ptr]
-                self.scpu.sram.ram[ptr+size+1] = self.scpu.sram.ram[ptr+1] - size
-                self.scpu.sram.ram[previousPtr] = self.scpu.sram.ram[ptr+size]
-                self.scpu.sram.ram[ptr] = CONST.EOL
-                return ptr
-
-    def freeUserMemory(self, start, size):
+    def freeMemory(self, start, size, freeList):
         """
         Takes the supplied start address and size of memory block and frees it
         from the userFreeList. Adds to correct location in the freeList.
@@ -413,81 +366,25 @@ class ComputerSimulator:
         Parameters:
             start           Start of address of memory
             size            size of memory to free
+            freeList        The list (OS/User) to work with
         
         Returns:
             status
         """
+        if freeList not in self.memoryLists.keys():
+            raise ValueError("Invalid memory list. Expected one of: %s" % self.memoryLists.keys())
         status = 0
-        ptr = self.userFreeList
+        ptr = vars(self)[freeList]
         previousPtr = CONST.EOL
         if (ptr == CONST.EOL):  # All Memory Used
-            self.userFreeList = start
+            vars(self)[freeList] = start
             self.scpu.sram.ram[start] = CONST.EOL
             self.scpu.sram.ram[start+1] = size
         else:
             if (ptr-(start+size) == 0):  # Blocks next to each other at beinning
                 self.scpu.sram.ram[start] = self.scpu.sram.ram[ptr]
                 self.scpu.sram.ram[start+1] = size + self.scpu.sram.ram[ptr+1]
-                self.userFreeList = start
-                self.scpu.sram.ram[ptr] = 0
-                self.scpu.sram.ram[ptr+1] = 0
-                return CONST.OK
-            else:
-                while (ptr != CONST.EOL):
-                    previousPtr = ptr
-                    ptr = self.scpu.sram.ram[ptr]
-                    if (ptr-(start+size) == 0):
-                        # Blocks Next to each other in middle
-                        if (start-(previousPtr+self.scpu.sram.ram[previousPtr+1]) == 0):
-                            # Between two blocks
-                            self.scpu.sram.ram[previousPtr+1] = size + self.scpu.sram.ram[ptr+1] + self.scpu.sram.ram[previousPtr+1]
-                            self.scpu.sram.ram[previousPtr] = self.scpu.sram.ram[ptr]
-                            self.scpu.sram.ram[ptr] = 0
-                            self.scpu.sram.ram[ptr+1] = 0
-                            return CONST.OK
-                        else:
-                            # Next to block
-                            self.scpu.sram.ram[start] = self.scpu.sram.ram[ptr]
-                            self.scpu.sram.ram[start+1] = size + self.scpu.sram.ram[ptr+1]
-                            self.scpu.sram.ram[previousPtr] = start
-                            self.scpu.sram.ram[ptr] = 0
-                            self.scpu.sram.ram[ptr+1] = 0
-                            return CONST.OK
-                # Block at end of list
-                if (start-(previousPtr+self.scpu.sram.ram[previousPtr+1]) == 0):
-                    self.scpu.sram.ram[previousPtr+1] = size + self.scpu.sram.ram[previousPtr+1]
-                    return CONST.OK
-                else:
-                    self.scpu.sram.ram[start] = CONST.EOL
-                    self.scpu.sram.ram[start+1] = size
-                    self.scpu.sram.ram[previousPtr] = start
-                    return CONST.OK
-        return status
-
-    def freeOSMemory(self, start, size):
-        """
-        Takes the supplied start address and size of memory block and frees it
-        from the osFreeList. Adds to correct location in the freeList.
-
-        Parameters:
-            start           Start of address of memory
-            size            size of memory to free
-        
-        Returns:
-            status
-        """
-        status = 0
-        ptr = self.osFreeList
-        previousPtr = CONST.EOL
-        if (ptr == CONST.EOL):  # All Memory Used
-            self.osFreeList = start
-            self.scpu.sram.ram[start] = CONST.EOL
-            self.scpu.sram.ram[start+1] = size
-        else:
-            if (ptr-(start+size) == 0):  # Blocks next to each other at beinning
-                self.scpu.sram.ram[start] = self.scpu.sram.ram[ptr]
-                self.scpu.sram.ram[start+1] = size + self.scpu.sram.ram[ptr+1]
-                self.osFreeList = start
+                vars(self)[freeList] = start
                 self.scpu.sram.ram[ptr] = 0
                 self.scpu.sram.ram[ptr+1] = 0
                 return CONST.OK
@@ -571,7 +468,7 @@ class ComputerSimulator:
             ER_MEM          no memory available
         """
         # Allocate Memory for PCB
-        pcbptr = self.allocateOSMemory(CONST.PCBSIZE)
+        pcbptr = self.allocateMemory(CONST.PCBSIZE, "osFreeList")
         if (pcbptr < 0):
             return CONST.ER_MEM
         status = self.absoluteLoader(filename)
@@ -581,9 +478,9 @@ class ComputerSimulator:
         # Set PC in PCB
         self.scpu.sram.ram[pcbptr+14] = status
         # Allocate Message Queue
-        msgqid = self.allocateOSMemory(10)
+        msgqid = self.allocateMemory(10, "osFreeList")
         # Allocate stack from user free list
-        ptr = self.allocateUserMemory(CONST.USER_STACK_SIZE)
+        ptr = self.allocateMemory(CONST.USER_STACK_SIZE, "userFreeList")
         if (ptr < 0):
             return CONST.ER_MEM
         else:
@@ -630,13 +527,13 @@ class ComputerSimulator:
             ER_MEM          no memory available
         """
         # Allocate memory for pcb
-        pcbptr = self.allocateOSMemory(CONST.PCBSIZE)
+        pcbptr = self.allocateMemory(CONST.PCBSIZE, "userFreeList")
         # Set PC in PCB
         self.scpu.sram.ram[pcbptr+14] = self.scpu.gpr[3]
         # Allocate message queue
-        msgqid = self.allocateOSMemory(10)
+        msgqid = self.allocateMemory(10, "osFreeList")
         # Allocate stack from user free list
-        ptr = self.allocateUserMemory(CONST.USER_STACK_SIZE)
+        ptr = self.allocateMemory(CONST.USER_STACK_SIZE, "userFreeList")
         if (ptr < 0):
             return CONST.ER_MEM
         else:
@@ -715,8 +612,8 @@ class ComputerSimulator:
         Parameters:
             pcbptr      Pointer to the process to terminate
         """
-        self.freeUserMemory(self.scpu.sram.ram[pcbptr+15], self.scpu.sram.ram[pcbptr+16])
-        self.freeOSMemory(pcbptr, CONST.PCBSIZE)
+        self.freeMemory(self.scpu.sram.ram[pcbptr+15], self.scpu.sram.ram[pcbptr+16], "userFreeList")
+        self.freeMemory(pcbptr, CONST.PCBSIZE, "osFreeList")
 
     def selectProcess(self):
         """
