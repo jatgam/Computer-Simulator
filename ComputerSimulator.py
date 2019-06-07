@@ -84,7 +84,7 @@ class ComputerSimulator:
 
         Also, loads the OS boot code. In this case, and Idle process.
         """
-        idle = [0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1]
+        idle = [0x0, 0x60000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, -1]
         part1size = self.scpu.sdisk.numSectors-1
         part1fatStart = int(part1size/2)
         part1bitmapsize = math.ceil(part1size/self.scpu.sdisk.sectorSize)
@@ -240,7 +240,7 @@ class ComputerSimulator:
             self.scpu.psr = CONST.USERMODE
             return CONST.WAITING
         elif (sysCallID == CONST.IO_PUTC):
-            self.scpu.sram.ram[self.RunningPCBptr+4] = CONST.WAITINGGET
+            self.scpu.sram.ram[self.RunningPCBptr+4] = CONST.WAITINGPUT
             self.scpu.sram.ram[self.RunningPCBptr+1] = CONST.WAITING
             print("-------------------------------")
             print("System Call Recieved: io_putc")
@@ -442,7 +442,7 @@ class ComputerSimulator:
         for programLine in programFile.readlines():
             temp = programLine.split(" ")
             addr = int(temp[0])
-            content = int(temp[1], 0)
+            content = int(temp[1], 16)
             if (addr >= 0) and (addr <= 9999):
                 self.scpu.sram.ram[addr] = content
             elif (addr == CONST.ENDPROG):
@@ -527,7 +527,7 @@ class ComputerSimulator:
             ER_MEM          no memory available
         """
         # Allocate memory for pcb
-        pcbptr = self.allocateMemory(CONST.PCBSIZE, "userFreeList")
+        pcbptr = self.allocateMemory(CONST.PCBSIZE, "osFreeList")
         # Set PC in PCB
         self.scpu.sram.ram[pcbptr+14] = self.scpu.gpr[3]
         # Allocate message queue
@@ -958,6 +958,7 @@ class ComputerSimulator:
         # GPR1 has process PID
         # GPR2 has start address of message
         # Set GPR0 to status when done
+        self.logger.debug("msgQsend pid: %s, start addr: %s", self.scpu.gpr[1], self.scpu.gpr[2])
         pctptr = self.searchPID(self.scpu.gpr[1])  # Search WQ and RQ for pid
         if (pctptr == CONST.EOL):  # Invalid PID
             self.scpu.gpr[0] = CONST.ER_TID  # Error, invalid PID
@@ -1128,7 +1129,7 @@ class ComputerSimulator:
             self.printRunningP(self.RunningPCBptr)
             self.scpu.psr = CONST.USERMODE
             status = self.scpu.executeProgram(self.systemCall)
-            self.dumpMemory("User Dynamic Area Memory Dump", 3000, 3390)
+            self.dumpMemory("User Dynamic Area Memory Dump", 3000, 3050)
             self.scpu.psr = CONST.OSMODE
             if (status == CONST.TIMESLICE):  # Timeslice expired
                 self.saveCPUContext(self.RunningPCBptr)

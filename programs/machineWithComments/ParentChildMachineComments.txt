@@ -96,17 +96,17 @@ Address     Value        Comments
 101         1
 102         91600        Branch on plus, Check GPR6
 103         95           if positive, goto loop
-104         55014        Move msgtoprint to GPR4
+104         50014        Move msgtoprint to GPR4
 105         78           Address of msgtoprint
-106         55034        Move mypid to GPR4(autoinc)
+106         50034        Move mypid to GPR4(autoinc)
 107         77           Address of mypid
 108         55034        Move next word toGPR4(autoinc)
 109         1            Count of message
 110         55034        Move 'P' to GPR4(autoinc)
 111         080          'P'
-112         55011        Move senderpid to GPR1
+112         50011        Move senderpid to GPR1
 113         79           Address of senderpid
-114         55012        Move msgtoprint to GPR2
+114         50012        Move msgtoprint to GPR2
 115         78           Address of msgtoprint
 116         85000        System Call
 117         12           msg_qsend
@@ -120,9 +120,9 @@ Address     Value        Comments
 125         1            Count of message
 126         50034        Move 'F' to GPR4(autoinc)
 127         070          'F'
-128         55011        Move senderpid to GPR1
+128         50011        Move senderpid to GPR1
 129         79           Address of senderpid
-130         55012        Move msgtoprint to GPR2
+130         50012        Move msgtoprint to GPR2
 131         78           Address of msgtoprint
 132         85000        System Call
 133         12           msg_qsend
